@@ -2,6 +2,8 @@
 
 Every morning, this system turns **yesterday's seed and pre-seed funding announcements** into **researched, fit-scored, personalised outreach drafts** for an accelerator's recruitment lead (Rohit). Startups that don't fit the accelerator's thesis are filtered out before he sees them. No startup is ever drafted twice.
 
+**Live:** https://funding-outreach-engine-chi.vercel.app · **Components Map:** [COMPONENTS_MAP.md](COMPONENTS_MAP.md)
+
 **Stack:** Next.js 16 (App Router, Server Actions) on Vercel · Vercel Cron · Supabase Postgres · Gemini Flash `google/gemini-3.7-flash` via OpenRouter, pinned to Google infrastructure (structured JSON output + native Google Search grounding) · live RSS / Google News feeds.
 
 ---
