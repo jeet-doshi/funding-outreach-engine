@@ -9,8 +9,8 @@ function required(name: string): string {
 export const env = {
   supabaseUrl: () => required("SUPABASE_URL"),
   supabaseServiceKey: () => required("SUPABASE_SERVICE_ROLE_KEY"),
-  geminiApiKey: () => required("GEMINI_API_KEY"),
-  geminiModel: () => process.env.GEMINI_MODEL || "gemini-2.5-flash",
+  openrouterApiKey: () => required("OPENROUTER_API_KEY"),
+  geminiModel: () => process.env.GEMINI_MODEL || "google/gemini-3.7-flash",
   cronSecret: () => process.env.CRON_SECRET || "",
   dashboardPassword: () => process.env.DASHBOARD_PASSWORD || "",
 };

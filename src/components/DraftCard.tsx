@@ -46,7 +46,7 @@ export function DraftCard({ draft, announcedAgo, windowHours }: Props) {
             {s.amount_text && <span className="badge bg-stone-100 text-stone-700">{s.amount_text}</span>}
             {draft.status !== "draft" && <StatusBadge status={draft.status} />}
           </div>
-          <p className="mt-1 text-sm text-stone-600">{s.description ?? s.research?.summary}</p>
+          <p className="mt-1 line-clamp-2 text-sm text-stone-600" title={s.research?.summary ?? undefined}>{s.description ?? s.research?.summary}</p>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-500">
             {s.sector && <span>🏷 {s.sector}</span>}
             {s.location && <span>📍 {s.location}</span>}
@@ -77,7 +77,7 @@ export function DraftCard({ draft, announcedAgo, windowHours }: Props) {
           <label className="label" htmlFor={`body-${draft.id}`}>Email</label>
           <textarea
             id={`body-${draft.id}`}
-            className="input min-h-56 font-[450] leading-relaxed"
+            className="input min-h-80 font-[450] leading-relaxed"
             value={body}
             onChange={(e) => setBody(e.target.value)}
           />

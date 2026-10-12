@@ -5,7 +5,7 @@ const FLOW = [
   { n: "02", title: "Ingest", tech: "RSS · 8 live feeds", body: "Fetches TechCrunch, Crunchbase News, Inc42, YourStory, Tech Funding News and Google News queries in parallel. Keeps items inside the lookback window that look like funding news." },
   { n: "03", title: "Extract", tech: "Gemini Flash · JSON schema", body: "Reads articles in batches of 10 and returns structured facts: company, round, amount (USD), investors, sector, founders. Filters out fund closes, roundups and rumours." },
   { n: "04", title: "Dedupe + rules", tech: "Postgres constraints", body: "Normalised company name + domain match against every startup ever seen and the do-not-contact list. Stage and raise-size rules from the thesis are applied deterministically." },
-  { n: "05", title: "Research", tech: "Gemini Flash + Google Search grounding", body: "Live web research: product, customers, traction, founders, website. Falls back to the announcement text if grounding is unavailable." },
+  { n: "05", title: "Research", tech: "Gemini Flash + native Google Search", body: "Live web research: product, customers, traction, founders, website. Falls back to the announcement text if grounding is unavailable." },
   { n: "06", title: "Score", tech: "Gemini Flash · thesis from Supabase", body: "Scores 0–100 against the active thesis with a per-criterion breakdown. Below the threshold → rejected and hidden from Rohit." },
   { n: "07", title: "Draft", tech: "Gemini Flash", body: "Writes a personalised 110–160 word email referencing the round, investors and product, in the thesis's tone and call to action." },
   { n: "08", title: "Review", tech: "Next.js dashboard", body: "Rohit edits, approves, opens in his mail client, and marks sent. Every action is persisted." },

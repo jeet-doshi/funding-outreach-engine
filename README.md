@@ -2,7 +2,7 @@
 
 Every morning, this system turns **yesterday's seed and pre-seed funding announcements** into **researched, fit-scored, personalised outreach drafts** for an accelerator's recruitment lead (Rohit). Startups that don't fit the accelerator's thesis are filtered out before he sees them. No startup is ever drafted twice.
 
-**Stack:** Next.js 16 (App Router, Server Actions) on Vercel · Vercel Cron · Supabase Postgres · Gemini Flash (structured JSON output + Google Search grounding) · live RSS / Google News feeds.
+**Stack:** Next.js 16 (App Router, Server Actions) on Vercel · Vercel Cron · Supabase Postgres · Gemini Flash `google/gemini-3.7-flash` via OpenRouter, pinned to Google infrastructure (structured JSON output + native Google Search grounding) · live RSS / Google News feeds.
 
 ---
 
@@ -36,7 +36,7 @@ The `thesis` table holds the free-text thesis, target and excluded sectors, stag
 ## Setup
 
 1. **Supabase:** create a project. In the SQL Editor, paste and run `supabase/schema.sql`. It is idempotent, and it seeds a sample thesis and 8 sources.
-2. **Environment:** copy `.env.example` to `.env.local` and fill in `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GEMINI_API_KEY` and `CRON_SECRET`.
+2. **Environment:** copy `.env.example` to `.env.local` and fill in `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENROUTER_API_KEY` and `CRON_SECRET`.
 3. **Run locally:** `npm install && npm run dev`, open http://localhost:3000 and click **Run pipeline now**.
 4. **Tests:** `npm test` runs the unit tests for normalisation and dedupe logic.
 5. **Deploy:** import the repo into Vercel and add the same env vars. The cron job in `vercel.json` registers automatically.

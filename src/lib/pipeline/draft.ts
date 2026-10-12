@@ -25,12 +25,23 @@ function system(t: Thesis): string {
 Program: ${t.accelerator_pitch}
 Tone: ${t.email_tone}. Call to action: ${t.call_to_action}.
 Rules:
-- 110-160 words, plain text, no markdown, short paragraphs. Subject under 9 words, specific to the company.
+- 110-160 words, plain text, no markdown. Subject under 9 words, specific to the company.
+- Format: greeting line, then 3 short paragraphs (1-3 sentences each), then a sign-off. Separate every paragraph with a blank line and put the signature on its own lines.
 - Open with a congratulation that names the round and something concrete (an investor, the product, a customer or milestone).
 - One or two sentences on why the program is relevant to THEIR situation right after raising — tie to the fit reasons.
 - Address the founder by first name if known, otherwise "Hi <Company> team".
 - Only use facts provided. Never invent metrics, customers or mutual connections. No placeholders like [Name].
 - Sign off as ${t.sender_name}, ${t.sender_title}, ${t.accelerator_name}.`;
+}
+
+/** Safety net: if the model returns one long block, split it into readable paragraphs. */
+function formatBody(body: string): string {
+  const b = body.replace(/\r/g, "").trim();
+  if (b.includes("\n\n")) return b;
+  const sentences = b.split(/(?<=[.!?])\s+(?=[A-Z])/);
+  const paras: string[] = [];
+  for (let i = 0; i < sentences.length; i += 2) paras.push(sentences.slice(i, i + 2).join(" "));
+  return paras.join("\n\n");
 }
 
 export async function draft(ctx: RunContext): Promise<void> {
@@ -59,7 +70,7 @@ export async function draft(ctx: RunContext): Promise<void> {
       const { error: insErr } = await db().from("drafts").insert({
         startup_id: s.id,
         subject: out.subject.trim(),
-        body: out.body.trim(),
+        body: formatBody(out.body),
         personalization: { points: out.personalization_points },
         thesis_version: ctx.thesis.version,
       });

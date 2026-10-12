@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "../supabase";
 import type { Thesis } from "../types";
+import { aiCost } from "../gemini";
 import { createContext } from "./context";
 import { ingest } from "./ingest";
 import { extract } from "./extract";
@@ -47,6 +48,7 @@ export async function runPipeline(trigger: "cron" | "manual", budgetMs = 270_000
   if (error || !run) throw new Error(`Could not create run: ${error?.message}`);
 
   const ctx = createContext(run.id, thesis, budgetMs);
+  aiCost.reset();
   await ctx.log("run", `Started (${trigger}) with thesis v${thesis.version}, lookback ${thesis.lookback_hours}h, threshold ${thesis.fit_threshold}`);
 
   const stages = [
@@ -70,6 +72,22 @@ export async function runPipeline(trigger: "cron" | "manual", budgetMs = 270_000
     }
   }
 
+  // Each stage caps its batch size; keep draining the backlog while there's time.
+  for (let pass = 2; pass <= 4 && ctx.timeLeft() > 60_000; pass++) {
+    const { count } = await db().from("startups").select("id", { count: "exact", head: true }).in("status", ["new", "researched", "fit"]);
+    if (!count) break;
+    await ctx.log("run", `Pass ${pass}: ${count} startup(s) still in progress, continuing`);
+    for (const [name, stage] of stages.slice(2)) {
+      try {
+        await stage(ctx);
+      } catch (e) {
+        failure = `${name}: ${(e as Error).message}`;
+        await ctx.log(name, failure, "error");
+        status = "partial";
+      }
+    }
+  }
+
   // Anything still mid-pipeline means we ran out of time — the next run continues it.
   const { count: backlog } = await db()
     .from("startups")
@@ -77,6 +95,7 @@ export async function runPipeline(trigger: "cron" | "manual", budgetMs = 270_000
     .in("status", ["new", "researched", "fit"]);
   const { count: articleBacklog } = await db().from("articles").select("id", { count: "exact", head: true }).eq("status", "new");
   ctx.stats.backlog = (backlog ?? 0) + (articleBacklog ?? 0);
+  ctx.stats.ai_cost_usd = Math.round(aiCost.get() * 10000) / 10000;
   if (status === "completed" && ctx.stats.backlog > 0) status = "partial";
   if (failure && !ctx.stats.drafts_created && !ctx.stats.articles_new && ctx.stats.sources_ok === undefined) status = "failed";
 
