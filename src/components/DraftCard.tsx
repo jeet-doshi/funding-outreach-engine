@@ -31,7 +31,15 @@ export function DraftCard({ draft, announcedAgo, windowHours }: Props) {
     }, done);
 
   const firstFounder = s.founders?.[0]?.name;
-  const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const su = encodeURIComponent(subject);
+  const bo = encodeURIComponent(body);
+  // Web compose links work without any desktop mail app configured.
+  const gmail = `https://mail.google.com/mail/?view=cm&fs=1&su=${su}&body=${bo}`;
+  const outlook = `https://outlook.office.com/mail/deeplink/compose?subject=${su}&body=${bo}`;
+  const mailto = `mailto:?subject=${su}&body=${bo}`;
+  const opened = () => {
+    if (draft.status === "draft") changeStatus("approved", "Opened in email — approved");
+  };
   const reasons = s.fit_reasons;
 
   return (
@@ -156,8 +164,14 @@ export function DraftCard({ draft, announcedAgo, windowHours }: Props) {
         )}
         {(draft.status === "draft" || draft.status === "approved") && (
           <>
-            <a className="btn btn-secondary" href={mailto} onClick={() => changeStatus("approved", "Opened in mail client")}>
-              ✉ Open in email
+            <a className="btn btn-secondary" href={gmail} target="_blank" rel="noreferrer" onClick={opened} title="Opens a pre-filled Gmail compose window">
+              ✉ Open in Gmail
+            </a>
+            <a className="btn btn-secondary" href={outlook} target="_blank" rel="noreferrer" onClick={opened} title="Opens a pre-filled Outlook web compose window">
+              Outlook
+            </a>
+            <a className="btn btn-ghost" href={mailto} onClick={opened} title="Uses your default desktop mail app, if one is set up">
+              Mail app
             </a>
             <button
               className="btn btn-secondary"
