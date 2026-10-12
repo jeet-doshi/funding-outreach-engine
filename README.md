@@ -49,3 +49,7 @@ The `thesis` table holds the free-text thesis, target and excluded sectors, stag
 - **Drafts, not auto-send.** Rohit stays in control of every email. Founders' email addresses are not guessed, because fabricating contact details is worse than leaving them blank. The *Open in email* button pre-fills the subject and body.
 - **Hard rules are deterministic, and fit is judged by the LLM.** Stage and raise size are filtered in code, which is cheap and predictable. The nuanced judgement comes from Gemini, which shows its per-criterion reasoning so it can be audited.
 - **Vercel Hobby limits.** Hobby allows only one cron job per day and caps function duration. Each run therefore has a time budget and limits per stage, and the resumable design picks up any overflow on the next run.
+
+## Deployment
+
+Auto-deploys from `main` on Vercel. The daily cron (`vercel.json`) calls `/api/cron` at 01:00 UTC; check it under Vercel → Settings → Cron Jobs.
