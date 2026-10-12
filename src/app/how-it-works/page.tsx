@@ -15,12 +15,12 @@ const COMPONENTS: [string, string, string, string][] = [
   ["Scheduler", "Vercel Cron (vercel.json)", "Starts the daily run", "Bearer CRON_SECRET; manual trigger fallback"],
   ["Orchestrator", "src/lib/pipeline/run.ts", "Runs stages in order, records run + stats", "DB unique index = one run at a time; stale-run recovery; time budget → partial run, next run resumes"],
   ["Ingest", "src/lib/pipeline/ingest.ts", "RSS → articles table", "Per-source timeout; one failing feed never stops the run; URL unique → never reprocessed"],
-  ["Extractor", "src/lib/pipeline/extract.ts", "Article → structured funding facts", "Gemini responseSchema (typed JSON); failed batch stays 'new' and retries next run"],
+  ["Extractor", "src/lib/pipeline/extract.ts", "Article → structured funding facts", "Strict JSON-schema output (typed); failed batch stays 'new' and retries next run"],
   ["Deduper", "extract.ts + DB constraints", "Guarantees one outreach per startup", "UNIQUE(normalized_name), UNIQUE(domain), UNIQUE(drafts.startup_id), do-not-contact list"],
   ["Researcher", "src/lib/pipeline/research.ts", "Live web research brief", "Grounded search → ungrounded fallback; domain clash = duplicate"],
   ["Scorer", "src/lib/pipeline/score.ts", "Fit score vs thesis", "Thesis loaded from Supabase per run; version stored on every score"],
   ["Drafter", "src/lib/pipeline/draft.ts", "Personalised email", "Only uses provided facts; no placeholders; DB refuses a 2nd draft"],
-  ["Gemini client", "src/lib/gemini.ts", "All LLM calls", "Retries 429/5xx with backoff + server retryDelay; concurrency cap; 60s timeout"],
+  ["Gemini client", "src/lib/gemini.ts", "All LLM calls — google/gemini-3.7-flash", "OpenRouter pinned to Google (no fallback); retries 429/5xx with backoff; stops on 402; concurrency cap; AI cost tracked per run"],
   ["Database", "Supabase Postgres (supabase/schema.sql)", "thesis, sources, articles, startups, drafts, runs, events, do_not_contact", "RLS on, no public policies — only the server (service role) can read/write"],
   ["Dashboard", "Next.js App Router + Server Actions", "Drafts inbox, runs log, thesis editor, sources", "Optional password gate (proxy.ts)"],
 ];
@@ -85,9 +85,9 @@ export default function HowItWorks() {
             <path d="M670 245 C710 245 710 170 738 170" />
             <path d="M738 135 C710 135 705 230 672 230" strokeDasharray="4 3" />
           </g>
-          <text x="450" y="100" fontSize="11" fill="#78716c">prompts</text>
-          <text x="455" y="212" fontSize="11" fill="#78716c">read thesis · write state</text>
-          <text x="690" y="205" fontSize="11" fill="#78716c">edits</text>
+          <text x="385" y="70" fontSize="11" fill="#78716c">prompts → JSON</text>
+          <text x="300" y="250" fontSize="11" fill="#78716c">read thesis · write state</text>
+          <text x="745" y="255" fontSize="11" fill="#78716c">edits</text>
         </svg>
       </section>
 
