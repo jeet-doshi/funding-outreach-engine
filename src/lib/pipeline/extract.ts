@@ -86,7 +86,7 @@ export async function extract(ctx: RunContext): Promise<void> {
   const batches: ArticleRow[][] = [];
   for (let i = 0; i < articles.length; i += BATCH) batches.push(articles.slice(i, i + BATCH) as ArticleRow[]);
 
-  await mapLimit(batches, 3, async (batch) => {
+  await mapLimit(batches, 6, async (batch) => {
     if (ctx.timeLeft() < 60_000) return; // leave time for later stages; unprocessed articles stay 'new'
     const prompt = batch
       .map((a, i) => `[${i}] ${a.title}\nSource: ${a.source_name}\nSnippet: ${a.summary || "(none)"}`)

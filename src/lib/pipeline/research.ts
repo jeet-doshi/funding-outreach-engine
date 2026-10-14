@@ -13,7 +13,7 @@ import { mapLimit, recordFailure } from "./context";
 // summary of the announcement itself and mark the brief grounded=false, so
 // the run still produces a draft instead of stalling.
 
-export const MAX_PER_RUN = 12;
+export const MAX_PER_RUN = 30;
 
 const SYSTEM = `You are a startup analyst at an accelerator. Research the company using Google Search and report only facts you can find.
 Respond with ONLY a JSON object (no prose) with keys:
@@ -101,7 +101,7 @@ export async function research(ctx: RunContext): Promise<void> {
   const { data, error } = await db().from("startups").select("*").eq("status", "new").order("discovered_at").limit(MAX_PER_RUN);
   if (error) throw new Error(`Could not load startups: ${error.message}`);
   if (!data?.length) return;
-  await mapLimit(data as Startup[], 3, async (s) => {
+  await mapLimit(data as Startup[], 6, async (s) => {
     if (ctx.timeLeft() < 45_000) return;
     try {
       await researchOne(ctx, s);

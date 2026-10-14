@@ -12,7 +12,7 @@ import { env } from "./env";
 
 const API = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_ATTEMPTS = 4;
-const MAX_CONCURRENT = Number(process.env.GEMINI_CONCURRENCY || 4);
+const MAX_CONCURRENT = Number(process.env.GEMINI_CONCURRENCY || 8);
 const GOOGLE_ONLY = { only: ["google-vertex", "google-ai-studio"], allow_fallbacks: false };
 
 let active = 0;

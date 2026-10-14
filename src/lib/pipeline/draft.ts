@@ -45,11 +45,11 @@ function formatBody(body: string): string {
 }
 
 export async function draft(ctx: RunContext): Promise<void> {
-  const { data, error } = await db().from("startups").select("*").eq("status", "fit").order("fit_score", { ascending: false }).limit(20);
+  const { data, error } = await db().from("startups").select("*").eq("status", "fit").order("fit_score", { ascending: false }).limit(30);
   if (error) throw new Error(`Could not load startups: ${error.message}`);
   if (!data?.length) return;
 
-  await mapLimit(data as Startup[], 3, async (s) => {
+  await mapLimit(data as Startup[], 6, async (s) => {
     if (ctx.timeLeft() < 15_000) return;
     try {
       // Defensive: never draft twice even if status got out of sync.

@@ -69,12 +69,12 @@ Be calibrated: 80+ = clearly in thesis, 60-79 = plausible fit, below 50 = outsid
 Base everything on the facts provided. Do not invent facts.`;
 
 export async function score(ctx: RunContext): Promise<void> {
-  const { data, error } = await db().from("startups").select("*").eq("status", "researched").order("discovered_at").limit(20);
+  const { data, error } = await db().from("startups").select("*").eq("status", "researched").order("discovered_at").limit(30);
   if (error) throw new Error(`Could not load startups: ${error.message}`);
   if (!data?.length) return;
   const t = ctx.thesis;
 
-  await mapLimit(data as Startup[], 3, async (s) => {
+  await mapLimit(data as Startup[], 6, async (s) => {
     if (ctx.timeLeft() < 30_000) return;
     try {
       const result = await generateJSON<FitReasons & { score: number }>({
