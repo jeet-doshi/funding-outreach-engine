@@ -4,6 +4,7 @@ import { generateJSON } from "../gemini";
 import { domainOf, formatUsd, normalizeCompanyName, normalizeStage } from "../normalize";
 import type { RunContext } from "./context";
 import { mapLimit } from "./context";
+import { findLikelyDuplicate } from "./dedupe";
 
 // STAGE 2 — EXTRACT + DEDUPE
 // Gemini reads articles in batches and returns structured funding facts.
@@ -154,6 +155,21 @@ async function handleExtraction(ctx: RunContext, a: ArticleRow, r: Extraction) {
       await db().from("startups").update({ source_urls: [...s.source_urls, a.url] }).eq("id", s.id);
     }
     await ctx.log("dedupe", `${r.company_name} already in pipeline (status: ${s.status}) — no duplicate outreach`);
+    return;
+  }
+
+  // Dedupe 3: same company under a different name (shared founder, same round + investor, "X" vs "X AI")
+  const fuzzy = await findLikelyDuplicate({
+    normalized_name: normalized,
+    founders: (r.founders ?? []).map((name) => ({ name })),
+    investors: r.investors ?? [],
+    amount_usd: r.amount_usd,
+    round_type: stage,
+  });
+  if (fuzzy) {
+    ctx.bump("duplicates_skipped");
+    await setArticle("duplicate", { startup_id: fuzzy.id });
+    await ctx.log("dedupe", `${r.company_name} looks like ${fuzzy.name} (${fuzzy.reason}) — no duplicate outreach`);
     return;
   }
 

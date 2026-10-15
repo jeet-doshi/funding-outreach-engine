@@ -87,3 +87,45 @@ export function looksLikeFundingNews(text: string): boolean {
     text,
   );
 }
+
+// ---------------------------------------------------------------------------
+// Fuzzy "same company" matching. News outlets name the same startup
+// differently ("Parallel Loop" vs "Parallel Loop AI", "Evos" vs "Evolutionary
+// Operating System"), so exact keys alone are not enough.
+// ---------------------------------------------------------------------------
+
+const GENERIC_TRAILING = new Set([
+  "ai", "tech", "labs", "lab", "hq", "app", "io", "technologies", "technology",
+  "systems", "software", "group", "global", "platform", "solutions",
+]);
+
+/** "parallel loop ai" → "parallel loop", "nusynth tech" → "nusynth". Never strips the last word. */
+export function coreName(normalized: string): string {
+  const t = normalized.split(" ").filter(Boolean);
+  while (t.length > 1 && GENERIC_TRAILING.has(t[t.length - 1])) t.pop();
+  return t.join(" ");
+}
+
+export type CompanyFingerprint = {
+  normalized_name: string;
+  founders?: { name: string }[] | null;
+  investors?: string[] | null;
+  amount_usd?: number | null;
+  round_type?: string | null;
+};
+
+const fullNames = (fs: { name: string }[] | null | undefined) =>
+  (fs ?? []).map((f) => (f?.name ?? "").toLowerCase().replace(/\s+/g, " ").trim()).filter((n) => n.includes(" "));
+
+/** Returns why two records look like the same company, or null. */
+export function sameCompanyReason(a: CompanyFingerprint, b: CompanyFingerprint): string | null {
+  if (coreName(a.normalized_name) === coreName(b.normalized_name)) return "same name";
+  const fb = new Set(fullNames(b.founders));
+  const founder = fullNames(a.founders).find((n) => fb.has(n));
+  if (founder) return `same founder (${founder})`;
+  if (a.round_type && a.round_type === b.round_type && a.amount_usd && b.amount_usd && Math.abs(a.amount_usd - b.amount_usd) <= 0.02 * b.amount_usd) {
+    const ia = new Set((a.investors ?? []).map((x) => x.toLowerCase().trim()));
+    if ((b.investors ?? []).some((x) => ia.has(x.toLowerCase().trim()))) return "same round, amount and investor";
+  }
+  return null;
+}

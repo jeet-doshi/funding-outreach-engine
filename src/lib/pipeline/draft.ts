@@ -5,6 +5,8 @@ import type { Startup, Thesis } from "../types";
 import type { RunContext } from "./context";
 import { mapLimit, recordFailure } from "./context";
 import { startupPrompt } from "./score";
+import { findLikelyDuplicate } from "./dedupe";
+import { sameCompanyReason } from "../normalize";
 
 // STAGE 5 — DRAFT
 // Write one personalised email per fit startup. drafts.startup_id is UNIQUE,
@@ -49,7 +51,31 @@ export async function draft(ctx: RunContext): Promise<void> {
   if (error) throw new Error(`Could not load startups: ${error.message}`);
   if (!data?.length) return;
 
-  await mapLimit(data as Startup[], 6, async (s) => {
+  // Final duplicate guard before anything is written (catches cases the
+  // extract-time check could not see, e.g. founders only found by research).
+  // Sequential and highest-score-first, so of two duplicates the best one is kept.
+  const toDraft: Startup[] = [];
+  for (const s of data as Startup[]) {
+    const inBatch = toDraft.find((k) => sameCompanyReason(s, k));
+    const existing = inBatch ? null : await findLikelyDuplicate(s, s.id);
+    const dup = inBatch
+      ? { name: inBatch.name, reason: sameCompanyReason(s, inBatch)! }
+      : existing && ["drafted", "rejected", "fit"].includes(existing.status)
+        ? existing
+        : null;
+    if (dup) {
+      await db()
+        .from("startups")
+        .update({ status: "rejected", rejection_reason: `Duplicate of ${dup.name} (${dup.reason})`, updated_at: new Date().toISOString() })
+        .eq("id", s.id);
+      ctx.bump("duplicates_skipped");
+      await ctx.log("dedupe", `${s.name} looks like ${dup.name} (${dup.reason}) — not drafted`);
+      continue;
+    }
+    toDraft.push(s);
+  }
+
+  await mapLimit(toDraft, 6, async (s) => {
     if (ctx.timeLeft() < 15_000) return;
     try {
       // Defensive: never draft twice even if status got out of sync.

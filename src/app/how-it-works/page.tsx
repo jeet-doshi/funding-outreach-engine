@@ -16,7 +16,7 @@ const COMPONENTS: [string, string, string, string][] = [
   ["Orchestrator", "src/lib/pipeline/run.ts", "Runs stages in order, records run + stats", "DB unique index = one run at a time; stale-run recovery; time budget → partial run, next run resumes"],
   ["Ingest", "src/lib/pipeline/ingest.ts", "RSS → articles table", "Per-source timeout; one failing feed never stops the run; URL unique → never reprocessed"],
   ["Extractor", "src/lib/pipeline/extract.ts", "Article → structured funding facts", "Strict JSON-schema output (typed); failed batch stays 'new' and retries next run"],
-  ["Deduper", "extract.ts + DB constraints", "Guarantees one outreach per startup", "UNIQUE(normalized_name), UNIQUE(domain), UNIQUE(drafts.startup_id), do-not-contact list"],
+  ["Deduper", "extract.ts + dedupe.ts + DB constraints", "Guarantees one outreach per startup", "Exact: UNIQUE(name), UNIQUE(domain), UNIQUE(drafts.startup_id), do-not-contact list. Fuzzy: core name, shared founder, same round + amount + investor — re-checked before drafting"],
   ["Researcher", "src/lib/pipeline/research.ts", "Live web research brief", "Grounded search → ungrounded fallback; domain clash = duplicate"],
   ["Scorer", "src/lib/pipeline/score.ts", "Fit score vs thesis", "Thesis loaded from Supabase per run; version stored on every score"],
   ["Drafter", "src/lib/pipeline/draft.ts", "Personalised email", "Only uses provided facts; no placeholders; DB refuses a 2nd draft"],

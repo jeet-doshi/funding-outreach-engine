@@ -42,3 +42,29 @@ test("keyword gate", () => {
   assert.ok(looksLikeFundingNews("Finches raises €2M in pre-seed funding"));
   assert.ok(!looksLikeFundingNews("Apple unveils a new iPhone"));
 });
+
+import { coreName, sameCompanyReason } from "../src/lib/normalize.ts";
+
+test("generic trailing words are ignored when comparing names", () => {
+  assert.equal(coreName(normalizeCompanyName("Parallel Loop AI")), coreName(normalizeCompanyName("Parallel Loop")));
+  assert.equal(coreName(normalizeCompanyName("NuSynth Tech")), coreName(normalizeCompanyName("NuSynth Technologies")));
+  assert.equal(coreName("ai"), "ai"); // never strips the only word
+});
+
+test("same founder means same company even under a different name", () => {
+  const evos = { normalized_name: "evos", founders: [{ name: "Urav Shah" }] };
+  const eos = { normalized_name: "evolutionary operating system", founders: [{ name: "urav  shah" }] };
+  assert.match(sameCompanyReason(eos, evos) ?? "", /same founder/);
+});
+
+test("same round, amount and investor means same company", () => {
+  const a = { normalized_name: "foo", round_type: "pre-seed", amount_usd: 9_000_000, investors: ["Uncork Capital"] };
+  const b = { normalized_name: "bar baz", round_type: "pre-seed", amount_usd: 9_000_000, investors: ["uncork capital", "Field"] };
+  assert.equal(sameCompanyReason(a, b), "same round, amount and investor");
+});
+
+test("unrelated startups are not merged", () => {
+  const a = { normalized_name: "acme", founders: [{ name: "Jane Doe" }], round_type: "seed", amount_usd: 3e6, investors: ["A"] };
+  const b = { normalized_name: "globex", founders: [{ name: "John Roe" }], round_type: "seed", amount_usd: 3e6, investors: ["B"] };
+  assert.equal(sameCompanyReason(a, b), null);
+});

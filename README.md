@@ -23,7 +23,7 @@ Every morning, this system turns **yesterday's seed and pre-seed funding announc
 
 ## Reliability design
 
-- **Duplicate outreach is impossible at the database level.** The schema has `UNIQUE(startups.normalized_name)`, `UNIQUE(startups.domain)` and `UNIQUE(drafts.startup_id)`, plus a manual `do_not_contact` table. A startup that was rejected, drafted or sent is remembered permanently.
+- **Duplicate outreach is impossible at the database level.** The schema has `UNIQUE(startups.normalized_name)`, `UNIQUE(startups.domain)` and `UNIQUE(drafts.startup_id)`, plus a manual `do_not_contact` table. A startup that was rejected, drafted or sent is remembered permanently. A second, fuzzy layer (`pipeline/dedupe.ts`) catches the same company under different names, using the core name ("Parallel Loop" = "Parallel Loop AI"), a shared founder, or the same round, amount and investor. It runs before a startup is saved and again just before drafting.
 - **Runs are resumable.** Every stage reads its work from the database by status (`new → researched → fit → drafted`) instead of from memory. If a run hits its time budget it is marked `partial`, and the next run continues from where it stopped.
 - **Only one run at a time.** A partial unique index (`pipeline_runs WHERE status='running'`) acts as an atomic lock. A run stuck as running for more than 10 minutes is marked failed so it can't block future runs.
 - **Failures are isolated.** One broken feed doesn't stop the run. A failed Gemini batch leaves its articles as `new` so they're retried. A startup that fails 3 times is parked as `error` (a dead-letter state) and can be retried from the Runs page.
