@@ -16,14 +16,18 @@ const TABS = [
 
 type Row = Draft & { startup: Startup };
 
+const PAGE = 15;
+
 export default async function DraftsPage({ searchParams }: PageProps<"/">) {
   await connection();
   const sp = await searchParams;
   const tab = TABS.find((t) => t.key === sp.tab)?.key ?? "draft";
   const since24h = isoHoursAgo(24);
+  // Show the newest drafts first, 15 at a time, so the page stays fast.
+  const shown = Math.min(Math.max(Number(sp.show) || PAGE, PAGE), 500);
 
   const [{ data: drafts }, { data: all }, { data: lastRun }, { count: screened }] = await Promise.all([
-    db().from("drafts").select("*, startup:startups(*)").eq("status", tab).order("created_at", { ascending: false }).limit(100),
+    db().from("drafts").select("*, startup:startups(*)").eq("status", tab).order("created_at", { ascending: false }).limit(shown),
     db().from("drafts").select("status, created_at, startup:startups(announced_at, discovered_at)"),
     db().from("pipeline_runs").select("*").order("started_at", { ascending: false }).limit(1).maybeSingle(),
     db().from("startups").select("id", { count: "exact", head: true }).eq("status", "rejected").gte("updated_at", since24h),
@@ -116,6 +120,15 @@ export default async function DraftsPage({ searchParams }: PageProps<"/">) {
                 windowHours={hoursBetween(d.startup.announced_at ?? d.startup.discovered_at, d.created_at)}
               />
             ))}
+            {(counts[tab] ?? 0) > rows.length && (
+              <Link
+                href={`/?${tab === "draft" ? "" : `tab=${tab}&`}show=${shown + PAGE}`}
+                scroll={false}
+                className="btn btn-secondary w-full py-2.5"
+              >
+                Show more ({(counts[tab] ?? 0) - rows.length} older)
+              </Link>
+            )}
           </div>
         )}
       </section>
